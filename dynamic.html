@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Awesome To-Do List</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(45deg, #56ff89, #ff6b95);
+      min-height: 100vh;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .input-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    #taskInput {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 25px 0 0 25px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    #addBtn {
+      padding: 15px 25px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 0 25px 25px 0;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #addBtn:hover {
+      background: #45a049;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      margin: 10px 0;
+      background: #f8f9fa;
+      border-radius: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .task:hover {
+      transform: translateX(5px);
+    }
+
+    .task.completed {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+
+    .task-text {
+      flex: 1;
+      margin-left: 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .delete-btn, .edit-btn {
+      background: #5047ff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      margin-left: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background: #ff3838;
+    }
+
+    .edit-btn:hover {
+      background: #ffa534;
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      margin: 50px 0;
+    }
+
+    .filters {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .filters button {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      background: #ddd;
+    }
+
+    .filters button.active {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .remaining-count {
+      text-align: center;
+      margin-top: 15px;
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✅ To-Do List</h1>
+
+    <div class="input-container">
+      <input type="text" id="taskInput" placeholder="What needs to be done?">
+      <button id="addBtn" onclick="addTask()">Add Task</button>
+    </div>
+
+    <div id="taskList">
+      <div class="empty-state">No tasks yet! Add one above to get started 🚀</div>
+    </div>
+
+    <div class="filters">
+      <button onclick="setFilter('all')" id="filter-all">All</button>
+      <button onclick="setFilter('active')" id="filter-active">Active</button>
+      <button onclick="setFilter('completed')" id="filter-completed">Completed</button>
+    </div>
+
+    <div class="remaining-count" id="remainingCount"></div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let filter = 'all';
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const taskText = input.value.trim();
+
+      if (taskText === '') {
+        alert('Please enter a task!');
+        return;
+      }
+
+      const task = {
+        id: Date.now(),
+        text: taskText,
+        completed: false
+      };
+
+      tasks.push(task);
+      input.value = '';
+      saveTasks();
+      renderTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(task => task.id !== id);
+      saveTasks();
+      renderTasks();
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(task =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      );
+      saveTasks();
+      renderTasks();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      const newText = prompt('Edit your task:', task.text);
+      if (newText !== null) {
+        task.text = newText.trim();
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filters button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('filter-' + f).classList.add('active');
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      const filteredTasks = tasks.filter(task => {
+        if (filter === 'active') return !task.completed;
+        if (filter === 'completed') return task.completed;
+        return true;
+      });
+
+      if (filteredTasks.length === 0) {
+        taskList.innerHTML = '<div class="empty-state">No tasks to show.</div>';
+        document.getElementById('remainingCount').textContent = '';
+        return;
+      }
+
+      taskList.innerHTML = filteredTasks.map(task => `
+        <div class="task ${task.completed ? 'completed' : ''}">
+          <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''}
+            onchange="toggleTask(${task.id})">
+          <span class="task-text" onclick="editTask(${task.id})">${task.text}</span>
+          <button class="edit-btn" onclick="editTask(${task.id})">Edit</button>
+          <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+        </div>
+      `).join('');
+
+      const remaining = tasks.filter(t => !t.completed).length;
+      document.getElementById('remainingCount').textContent =
+        `${remaining} task${remaining !== 1 ? 's' : ''} remaining`;
+    }
+
+    // Add task with Enter key
+    document.getElementById('taskInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    // Autofocus on page load
+    window.onload = () => {
+      document.getElementById('taskInput').focus();
+      setFilter('all');
+    };
+  </script>
+</body>
+</html>

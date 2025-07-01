@@ -1,0 +1,20 @@
+
+*{
+    background-color: mistyrose;
+}
+header{
+    background-color: rgb(207, 177, 177);
+}
+h1{
+    text-align: center;
+    color: brown;
+}
+img{
+    object-fit: contain;
+}
+table{
+    border: 1px solid black;
+}
+section{
+    background-color: rgb(190, 116, 116);
+}
